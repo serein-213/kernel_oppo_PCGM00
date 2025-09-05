@@ -9,17 +9,16 @@ jobs:
     runs-on: ubuntu-latest
     env:
       ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
-      TELEGRAM_TO: "${{ secrets.TELEGRAM_TO }}"
-      TELEGRAM_TOKEN: "${{ secrets.TELEGRAM_TOKEN }}"
       CCACHE_COMPILERCHECK: "%compiler% -dumpmachine; %compiler% -dumpversion"
       CCACHE_NOHASHDIR: "true"
       CCACHE_MAXSIZE: "2G"
       CCACHE_HARDLINK: "true"
       KERNEL_DEFCONFIG: "RMX1901_defconfig"
       KERNEL_CMDLINE: "ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- CROSS_COMPILE_ARM32=arm-linux-gnueabi- O=out LLVM_IAS=1"
+      KERNELSU_TAG: "v0.9.5"
     steps:
     - name: Checkout
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         persist-credentials: false
         submodules: 'true'
@@ -31,30 +30,23 @@ jobs:
     - name: Update Repo
       id: sha
       run: |
-        git config --global user.name "H1mJT"
-        git config --global user.email "himjyoti22@gmail.com"
+        git config --global user.name "serein-213"
+        git config --global user.email "1246452649@qq.com"
         git submodule sync
         git submodule update --init --recursive
         cd $GITHUB_WORKSPACE/KernelSU
-        git checkout main
-        git pull
-        cd .. && git add .
-        git commit -m "Auto sync KernelSU to latest source"
+        git fetch --tags --force
+        git checkout "tags/${KERNELSU_TAG}"
+        cd .. && git add KernelSU
+        git commit -m "Sync KernelSU to ${KERNELSU_TAG}" || true
         export NEW=$(git rev-parse HEAD)
         echo "NEW_SHA=$NEW" >> $GITHUB_OUTPUT
+
     - name: Push
       if: "${{ github.sha != steps.sha.outputs.NEW_SHA && env.ACCESS_TOKEN != ''}}"
       uses: ad-m/github-push-action@master
       with:
         github_token: ${{ secrets.ACCESS_TOKEN }}
-        
-    - name: Send build message to Telegram
-      if: "${{ env.TELEGRAM_TO != '' && env.TELEGRAM_TOKEN != '' && github.sha != steps.sha.outputs.NEW_SHA }}"
-      uses: appleboy/telegram-action@master
-      with:
-        to: ${{ secrets.TELEGRAM_TO }}
-        token: ${{ secrets.TELEGRAM_TOKEN }}
-        message: Build Started
         
     - name: Install dependencies
       if: "${{ github.sha != steps.sha.outputs.NEW_SHA }}"
@@ -88,21 +80,9 @@ jobs:
        cp out/arch/arm64/boot/Image.gz-dtb AnyKernel3
        cd AnyKernel3 && zip -r ../RMX1901-KernelSU-${{ steps.version.outputs.VER }}-${{ steps.get_time.outputs.TIME }}.zip *
 
-    - name: Upload build to Telegram
-      if: "${{ env.TELEGRAM_TO != '' && env.TELEGRAM_TOKEN != '' && github.sha != steps.sha.outputs.NEW_SHA}}"
-      uses: appleboy/telegram-action@master
-      with:
-        to: ${{ secrets.TELEGRAM_TO }}
-        token: ${{ secrets.TELEGRAM_TOKEN }}
-        message: |
-          Updated KernelSU to ${{ steps.version.outputs.VER }}
-          Get latest manager app at https://t.me/KernelSU_group/3234
-        document: RMX1901-KernelSU-${{ steps.version.outputs.VER }}-${{ steps.get_time.outputs.TIME }}.zip
     - name: Upload Kernel
       if: "${{ github.sha != steps.sha.outputs.NEW_SHA }}"
       uses: actions/upload-artifact@v4
       with:
         name: RMX1901-KernelSU-${{ steps.version.outputs.VER }}-${{ steps.get_time.outputs.TIME }}
         path: "AnyKernel3/*"
-        
-        
