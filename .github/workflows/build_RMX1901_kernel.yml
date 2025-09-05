@@ -50,11 +50,11 @@ jobs:
     
     - name: Build Kernel
       run: |
-       export PATH=$(pwd)/clang/bin/:$PATH
+       export CLANG=$(pwd)/clang/bin/clang
        export ARCH=arm64
        export SUBARCH=arm64
-       make $KERNEL_CMDLINE $KERNEL_DEFCONFIG CC="ccache clang"
-       make $KERNEL_CMDLINE CC="ccache clang" -j$(nproc --all)
+       make $KERNEL_CMDLINE $KERNEL_DEFCONFIG CC="ccache $CLANG" HOSTCC=/usr/bin/gcc HOSTCXX=/usr/bin/g++ HOSTLD=/usr/bin/ld
+       make $KERNEL_CMDLINE CC="ccache $CLANG" HOSTCC=/usr/bin/gcc HOSTCXX=/usr/bin/g++ HOSTLD=/usr/bin/ld -j$(nproc --all)
        cp out/arch/arm64/boot/Image.gz-dtb AnyKernel3
 
     - name: Upload Kernel
