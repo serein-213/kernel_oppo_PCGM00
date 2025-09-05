@@ -1,8 +1,6 @@
 name: Push lastest KernelSU
 on:
   workflow_dispatch:
-  schedule:
-    - cron: '30 6 * * 6'
 
 jobs:
   build:
@@ -72,7 +70,7 @@ jobs:
     - name: Build Kernel
       if: "${{ github.sha != steps.sha.outputs.NEW_SHA }}"
       run: |
-       export PATH=$(pwd)/clang/bin/:$PATH
+       export CLANG=$(pwd)/clang/bin/clang
        export ARCH=arm64
        export SUBARCH=arm64
        make $KERNEL_CMDLINE $KERNEL_DEFCONFIG CC="ccache clang"
