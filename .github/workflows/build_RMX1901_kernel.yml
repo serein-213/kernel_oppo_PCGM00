@@ -36,9 +36,9 @@ jobs:
         rm -rf AnyKernel3/.github
         git submodule sync
         git submodule update --init --recursive
-        cd $GITHUB_WORKSPACE/KernelSU
-        git checkout main
-        git pull
+        cd "$GITHUB_WORKSPACE/KernelSU"
+        git fetch --tags --force
+        git checkout -f "v0.9.5"
         export VERSION=$(git rev-list --count HEAD)
         echo "VER=$(($VERSION + 10200))" >> $GITHUB_OUTPUT
         cd -
@@ -62,4 +62,3 @@ jobs:
       with:
         name: RMX1901-KernelSU-${{ steps.version.outputs.VER }}-${{ steps.get_time.outputs.TIME }}
         path: "AnyKernel3/*"
-   
